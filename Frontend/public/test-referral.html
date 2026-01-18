@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Data Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .loading { opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Referral Data Test Page</h1>
+        <p>This page tests the referral API directly from the browser.</p>
+
+        <div class="test-section info">
+            <h3>📋 Instructions</h3>
+            <ol>
+                <li>Make sure you're logged into the main application</li>
+                <li>Open browser developer tools (F12)</li>
+                <li>Click "Test Referral API" button</li>
+                <li>Check the results below and in the console</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 Authentication Status</h3>
+            <div id="auth-status">Checking...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 API Test</h3>
+            <button onclick="testReferralAPI()" id="test-btn">Test Referral API</button>
+            <div id="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Raw Data</h3>
+            <div id="raw-data"></div>
+        </div>
+    </div>
+
+    <script>
+        // Check authentication status
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userData = localStorage.getItem('user');
+            
+            const authDiv = document.getElementById('auth-status');
+            
+            if (token && userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    authDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Authenticated as: ${user.email || 'Unknown'}<br>
+                            🔑 Token length: ${token.length}<br>
+                            👤 User data: Present
+                        </div>
+                    `;
+                } catch (e) {
+                    authDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Token present but user data is corrupted<br>
+                            Error: ${e.message}
+                        </div>
+                    `;
+                }
+            } else {
+                authDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Not authenticated<br>
+                        Token: ${token ? 'Present' : 'Missing'}<br>
+                        User Data: ${userData ? 'Present' : 'Missing'}
+                    </div>
+                `;
+            }
+        }
+
+        // Test referral API
+        async function testReferralAPI() {
+            const btn = document.getElementById('test-btn');
+            const resultsDiv = document.getElementById('test-results');
+            const rawDataDiv = document.getElementById('raw-data');
+            
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            resultsDiv.innerHTML = '<div class="info">🔄 Running tests...</div>';
+            
+            try {
+                const token = localStorage.getItem('token');
+                
+                if (!token) {
+                    throw new Error('No authentication token found');
+                }
+
+                console.log('🚀 Testing referral API...');
+                console.log('Token (first 20 chars):', token.substring(0, 20) + '...');
+
+                // Test referral metrics
+                const response = await fetch('https://guru-rohan2.onrender.com/api/referral/metrics', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('📊 Response status:', response.status);
+                console.log('📊 Response headers:', response.headers);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ Response data:', data);
+
+                // Display results
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        ✅ API Test Successful!<br>
+                        Status: ${response.status}<br>
+                        All Time Earnings: ₹${data.allTimeEarnings}<br>
+                        Today's Earnings: ₹${data.todayEarnings}<br>
+                        Account Balance: ₹${data.accountBalance}<br>
+                        Total Referrals: ${data.totalReferrals}<br>
+                        Affiliate ID: ${data.affiliateId}<br>
+                        Status: ${data.status}
+                    </div>
+                `;
+
+                rawDataDiv.innerHTML = `
+                    <h4>📋 Complete Response Data:</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+
+            } catch (error) {
+                console.error('❌ API test failed:', error);
+                
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        ❌ API Test Failed<br>
+                        Error: ${error.message}<br>
+                        Check browser console for details
+                    </div>
+                `;
+                
+                rawDataDiv.innerHTML = `
+                    <h4>❌ Error Details:</h4>
+                    <pre>${error.stack || error.message}</pre>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Test Referral API';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+    </script>
+</body>
+</html>
